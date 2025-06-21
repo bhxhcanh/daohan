@@ -1,5 +1,0 @@
-{
-  "name": "BHYT Expiration Management",
-  "description": "A web application to manage and track BHYT (Social Health Insurance) expiration lists, with user authentication and data filtering capabilities. Data is sourced from Google Sheets via a Google Apps Script backend.",
-  "requestFramePermissions": []
-}
