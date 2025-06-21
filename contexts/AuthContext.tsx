@@ -11,7 +11,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     isLoading: true,
     error: null,
     isAuthenticated: false,
-    // isApproved is now derived from user.status
   });
 
   const loadUserFromStorage = useCallback(() => {
@@ -68,12 +67,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setAuthState(prev => ({
         ...prev,
         isLoading: false,
-        error: null, 
+        // Set error to response.message if signup is successful for modal display
+        error: response.message || 'Đăng ký thành công. Vui lòng chờ phê duyệt.', 
+        user: null, // User is not logged in yet after signup
+        isAuthenticated: false,
       }));
-      if (response.message) {
-        setAuthState(prev => ({...prev, error: response.message, user: null, isAuthenticated: false}));
-      }
-
     } else {
       setAuthState(prev => ({
         ...prev,
@@ -85,7 +83,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = useCallback(async () => {
     setAuthState(prev => ({ ...prev, isLoading: true }));
-    await authService.logout();
+    await authService.logout(); // This is client-side for now
     localStorage.removeItem('bhytUser');
     setAuthState({
       user: null,
