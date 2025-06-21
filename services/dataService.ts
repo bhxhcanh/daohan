@@ -5,7 +5,7 @@ import { BHYTRecord, BHYTFilterParams, ApiResponse } from '../types';
 // !!! IMPORTANT: Replace this with your actual Google Apps Script Web App URL !!!
 // Ensure this is the SAME URL as in authService.ts if they point to the same GAS deployment.
 const API_BASE_URL = 'https://script.google.com/macros/s/AKfycbwupeI_-uhLqsnv1HiHAnQvjEojHpXra-tZoxJt_Md8-WesJxz8Eif3Vz9WpmOv3sXs/exec';
-  
+
 export const dataService = {
   fetchBHYTData: async (params: BHYTFilterParams): Promise<ApiResponse<BHYTRecord[]>> => {
     console.log('Fetching BHYTData with params:', params);
@@ -16,6 +16,8 @@ export const dataService = {
         headers: {
           'Content-Type': 'application/json',
         },
+        // Adding a unique query parameter to try and bypass potential caching for POST
+        // body: JSON.stringify({ action: 'fetchBHYTData', payload: params, _cacheBust: new Date().getTime() }),
         body: JSON.stringify({
           action: 'fetchBHYTData',
           payload: params,
@@ -29,7 +31,13 @@ export const dataService = {
             const errJson = await response.json();
             errorBody = errJson.error || errJson.message || JSON.stringify(errJson);
         } catch (e) {
-            errorBody = await response.text();
+            // If response is not JSON, use text
+            try {
+                errorBody = await response.text();
+            } catch (textError) {
+                // Fallback if text() also fails
+                errorBody = `Máy chủ trả về lỗi ${response.status} nhưng không thể đọc nội dung lỗi.`;
+            }
         }
         console.error('Fetch BHYT Data API Error (not ok):', response.status, errorBody);
         return { success: false, error: `Lỗi ${response.status}: ${errorBody}` };
@@ -43,9 +51,10 @@ export const dataService = {
       } else if (!result.success && result.error) {
          return { success: false, error: result.error };
       } else {
-        // This case might happen if GAS returns success: true but data is not an array or is missing
-        console.warn("Fetch BHYT Data: API reported success but data is not as expected.", result);
-        return { success: false, error: "Dữ liệu nhận được không hợp lệ." };
+        // This case might happen if GAS returns success: true but data is not an array or is missing,
+        // or if success field is missing but there's no error field.
+        console.warn("Fetch BHYT Data: API response structure is not as expected or indicates failure without explicit error message.", result);
+        return { success: false, error: result.message || "Dữ liệu nhận được không hợp lệ hoặc có lỗi không xác định từ API." };
       }
 
     } catch (error) {
