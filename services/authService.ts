@@ -2,7 +2,7 @@
 import { User, ApiResponse, SignupData } from '../types';
 
 // !!! IMPORTANT: Replace this with your actual Google Apps Script Web App URL !!!
-const API_BASE_URL = 'YOUR_GAS_WEB_APP_URL_SHOULD_BE_PLACED_HERE'; 
+const API_BASE_URL = 'https://script.google.com/macros/s/AKfycbwupeI_-uhLqsnv1HiHAnQvjEojHpXra-tZoxJt_Md8-WesJxz8Eif3Vz9WpmOv3sXs/exec'; 
 
 export const authService = {
   login: async (email: string, passwordAttempt: string): Promise<ApiResponse<User>> => {
