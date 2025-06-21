@@ -1,6 +1,6 @@
 // scripts.js
 const CONFIG = {
-  API_URL: '___REPLACE_WITH_YOUR_WEB_APP_URL___' // <-- Bạn cần thay bằng URL Web App thật
+  API_URL: 'https://script.google.com/macros/s/AKfycbwupeI_-uhLqsnv1HiHAnQvjEojHpXra-tZoxJt_Md8-WesJxz8Eif3Vz9WpmOv3sXs/exec' // <-- Bạn cần thay bằng URL Web App thật
 };
 
 let user = null;
