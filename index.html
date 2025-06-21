@@ -44,6 +44,7 @@
   <div id="root"></div>
   <!-- Change script type for Babel to process index.tsx -->
   <!-- data-presets tell Babel how to transpile (TypeScript and React JSX) -->
-  <script type="text/babel" data-presets="typescript,react" src="./index.tsx"></script>
+  <!-- data-type="module" tells Babel the source script is an ES module -->
+  <script type="text/babel" data-presets="typescript,react" data-type="module" src="./index.tsx"></script>
 </body>
 </html>
