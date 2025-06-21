@@ -13,6 +13,10 @@ export const authService = {
         headers: {
           'Content-Type': 'application/json',
         },
+        // Adding a unique query parameter to try and bypass potential caching for POST
+        // However, proper cache control headers from the server (GAS) are more reliable.
+        // For GAS, this is less common for POST, but good for diagnostics.
+        // body: JSON.stringify({ action: 'login', payload: { email, password: passwordAttempt }, _cacheBust: new Date().getTime() }),
         body: JSON.stringify({
           action: 'login',
           payload: { email, password: passwordAttempt },
