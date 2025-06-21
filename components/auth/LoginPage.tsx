@@ -12,13 +12,13 @@ interface LoginPageProps {
 
 const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup, onSwitchToForgotPassword }) => {
   const [email, setEmail] = useState('');
-  const [cccd, setCccd] = useState(''); // Using CCCD as password for this app
+  const [password, setPassword] = useState(''); // Đổi tên từ cccd sang password
   const { login, isLoading, error, clearError } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     clearError();
-    await login(email, cccd); // This will use password, not CCCD, if backend is updated
+    await login(email, password); 
   };
 
   return (
@@ -36,11 +36,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ onSwitchToSignup, onSwitchToForgo
           aria-required="true"
         />
         <Input
-          label="Mật khẩu" // Changed from CCCD to Mật khẩu
-          id="password"    // Changed from cccd to password
+          label="Mật khẩu" 
+          id="password"    
           type="password"
-          value={cccd} // This state variable should ideally be renamed to 'password'
-          onChange={(e) => setCccd(e.target.value)} // Renaming setCccd to setPassword would be good too
+          value={password} 
+          onChange={(e) => setPassword(e.target.value)} 
           placeholder="Nhập mật khẩu của bạn"
           required
           aria-required="true"
