@@ -1,46 +1,53 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BHYT Management</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <style>
-    /* Custom scrollbar for better aesthetics if needed */
-    ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #f1f1f1;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #888;
-      border-radius: 4px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #555;
-    }
-    body {
-      font-family: 'Inter', sans-serif; /* A nice sans-serif font */
-    }
-    /* Add Inter font from Google Fonts for better typography */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-  </style>
-<script type="importmap">
-{
-  "imports": {
-    "react/": "https://esm.sh/react@^19.1.0/",
-    "react": "https://esm.sh/react@^19.1.0",
-    "react-dom/": "https://esm.sh/react-dom@^19.1.0/"
-  }
-}
-</script>
-<link rel="stylesheet" href="/index.css">
+  <title>Trang quản lý BHYT</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
 </head>
-<body class="bg-gray-100">
-  <div id="root"></div>
-  <script type="text/babel" data-presets="typescript,react" data-type="module" src="./index.tsx"></script>
+<body>
+  <div class="container">
+    <h3 class="mb-4">Danh sách BHYT đến hạn</h3>
+    <div class="mb-3">
+      <button class="btn btn-primary me-2" onclick="loadData('dueSoon')">±30 ngày</button>
+      <button class="btn btn-warning me-2" onclick="loadData('expiredRecently')">30–90 ngày trước</button>
+      <select id="monthSelect" class="form-select d-inline w-auto" onchange="loadData('byMonth')">
+        <option value="">Chọn tháng</option>
+      </select>
+    </div>
+
+    <div id="loading" class="text-muted mb-2">Đang tải dữ liệu...</div>
+    <div class="table-responsive">
+      <table class="table table-bordered table-striped">
+        <thead>
+          <tr>
+            <th>Họ tên</th>
+            <th>Ngày sinh</th>
+            <th>Từ ngày</th>
+            <th>Đến ngày</th>
+            <th>Số điện thoại</th>
+            <th>Địa chỉ</th>
+            <th>maPb</th>
+            <th>maBv</th>
+          </tr>
+        </thead>
+        <tbody id="dataBody"></tbody>
+      </table>
+    </div>
+    <button class="btn btn-outline-secondary mt-3" onclick="logout()">Đăng xuất</button>
+  </div>
+  <script>
+    const today = new Date();
+    for (let m = 1; m <= 12; m++) {
+      const option = document.createElement('option');
+      option.value = m;
+      option.textContent = `Tháng ${m}/${today.getFullYear()}`;
+      document.getElementById('monthSelect').appendChild(option);
+    }
+    window.onload = () => loadData('dueSoon');
+  </script>
+  <script src="scripts.js"></script>
 </body>
 </html>
