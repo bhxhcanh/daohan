@@ -43,8 +43,14 @@ async function handleRegister() {
     headers: { 'Content-Type': 'application/json' }
   });
   const data = await res.json();
-  document.getElementById('registerMessage').innerText = data.message || data.error;
+  if (data.success) {
+    alert(data.message);
+    showLogin(); // quay lại trang đăng nhập
+  } else {
+    document.getElementById('registerMessage').innerText = data.error || 'Đăng ký thất bại';
+  }
 }
+
 
 // ========== QUÊN MẬT KHẨU ==========
 let currentEmail = '';
