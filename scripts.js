@@ -37,19 +37,32 @@ async function handleRegister() {
   const fullName = document.getElementById('regName').value.trim();
   const cccd = document.getElementById('regCCCD').value.trim();
   const password = document.getElementById('regPassword').value.trim();
-  const res = await fetch(CONFIG.API_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'signup', payload: { email, fullName, cccd, password } }),
-    headers: { 'Content-Type': 'application/json' }
-  });
-  const data = await res.json();
-  if (data.success) {
-    alert(data.message);
-    showLogin(); // quay lại trang đăng nhập
-  } else {
-    document.getElementById('registerMessage').innerText = data.error || 'Đăng ký thất bại';
+
+  if (!email || !fullName || !cccd || !password) {
+    document.getElementById('registerMessage').innerText = 'Vui lòng nhập đầy đủ thông tin.';
+    return;
+  }
+
+  try {
+    const res = await fetch(CONFIG.API_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'signup', payload: { email, fullName, cccd, password } }),
+      headers: { 'Content-Type': 'application/json' }
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      alert(data.message || 'Đăng ký thành công!');
+      showLogin(); // trở về đăng nhập
+    } else {
+      document.getElementById('registerMessage').innerText = data.error || 'Đăng ký thất bại.';
+    }
+  } catch (error) {
+    console.error('Lỗi fetch:', error);
+    document.getElementById('registerMessage').innerText = 'Lỗi kết nối máy chủ.';
   }
 }
+
 
 
 // ========== QUÊN MẬT KHẨU ==========
