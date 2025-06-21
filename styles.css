@@ -1,0 +1,12 @@
+/* styles.css */
+body {
+  padding: 1.5rem;
+}
+
+.hidden {
+  display: none;
+}
+
+table th, table td {
+  vertical-align: middle !important;
+}
