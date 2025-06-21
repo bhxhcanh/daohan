@@ -1,12 +1,70 @@
 /* styles.css */
+
 body {
   padding: 1.5rem;
+  font-family: Arial, sans-serif;
+  background-color: #f8f9fa;
 }
 
 .hidden {
   display: none;
 }
 
-table th, table td {
+h3 {
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  font-size: 0.95rem;
+}
+
+table th,
+table td {
   vertical-align: middle !important;
+  text-align: left;
+}
+
+.form-label {
+  font-weight: 500;
+}
+
+button.btn {
+  min-width: 100px;
+}
+
+@media (max-width: 768px) {
+  body {
+    padding: 1rem;
+  }
+
+  h3 {
+    font-size: 1.2rem;
+  }
+
+  table th,
+  table td {
+    font-size: 0.85rem;
+    word-break: break-word;
+  }
+
+  .btn {
+    display: block;
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+
+  .form-select,
+  .form-control {
+    font-size: 0.95rem;
+  }
+
+  .container {
+    padding: 0;
+  }
 }
