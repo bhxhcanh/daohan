@@ -1,4 +1,3 @@
-// === File: index.html ===
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -79,5 +78,30 @@
     </div>
   </div>
   <script src="scripts.js"></script>
+  <script>
+    let currentEmail = '';
+
+    function showRegister() {
+      hideAll();
+      document.getElementById('registerForm').classList.remove('hidden');
+    }
+
+    function showLogin() {
+      hideAll();
+      document.getElementById('loginForm').classList.remove('hidden');
+    }
+
+    function showForgotPassword() {
+      hideAll();
+      document.getElementById('forgotForm').classList.remove('hidden');
+    }
+
+    function hideAll() {
+      document.getElementById('loginForm').classList.add('hidden');
+      document.getElementById('registerForm').classList.add('hidden');
+      document.getElementById('forgotForm').classList.add('hidden');
+      document.getElementById('resetForm').classList.add('hidden');
+    }
+  </script>
 </body>
 </html>
