@@ -6,8 +6,9 @@ body {
   background-color: #f8f9fa;
 }
 
+/* Combined .hidden definition, keeping the !important one if it was intentional */
 .hidden {
-  display: none;
+  display: none !important;
 }
 
 h3 {
@@ -16,7 +17,9 @@ h3 {
 }
 
 .table-responsive {
-  overflow-x: auto;
+  overflow-x: auto; /* Ensures horizontal scroll if content overflows */
+  max-height: 60vh; /* Limits table height, e.g., 60% of viewport height */
+  overflow-y: auto; /* Adds vertical scroll if content exceeds max-height */
 }
 
 table {
@@ -28,6 +31,7 @@ table th,
 table td {
   vertical-align: middle !important;
   text-align: left;
+  white-space: nowrap; /* Prevents text from wrapping to the next line */
 }
 
 .form-label {
@@ -50,7 +54,11 @@ button.btn {
   table th,
   table td {
     font-size: 0.85rem;
-    word-break: break-word;
+    /* word-break: break-word; removed or commented as white-space: nowrap will take precedence for horizontal scrolling */
+  }
+
+  .table-responsive {
+    max-height: 50vh; /* Adjust max-height for smaller screens if needed */
   }
 
   .btn {
@@ -68,6 +76,5 @@ button.btn {
     padding: 0;
   }
 }
-.hidden {
-  display: none !important;
-}
+/* Ensure .hidden is defined only once, with !important if needed */
+/* The definition at the top of the file already handles this with !important */
