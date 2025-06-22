@@ -37,16 +37,84 @@
     </div>
     <button class="btn btn-outline-secondary mt-3" onclick="logout()">Đăng xuất</button>
   </div>
+
   <script>
-    const today = new Date();
-    for (let m = 1; m <= 12; m++) {
-      const option = document.createElement('option');
-      option.value = m;
-      option.textContent = `Tháng ${m}/${today.getFullYear()}`;
-      document.getElementById('monthSelect').appendChild(option);
+    const CONFIG = {
+      API_URL: 'https://script.google.com/macros/s/YOUR_EXEC_URL/exec'
+    };
+
+    const user = JSON.parse(localStorage.getItem('bhyt_user') || '{}');
+
+    function logout() {
+      localStorage.removeItem('bhyt_user');
+      window.location.href = './index.html';
     }
-    window.onload = () => loadData('dueSoon');
+
+    async function loadData(type) {
+      document.getElementById('loading').innerText = 'Đang tải dữ liệu...';
+      document.getElementById('dataBody').innerHTML = '';
+      if (!user || !user.cccd) return logout();
+
+      const payload = {
+        action: 'fetchBHYTData',
+        filterType: type,
+        userCCCD: user.cccd
+      };
+
+      if (type === 'byMonth') {
+        const month = document.getElementById('monthSelect').value;
+        if (!month) return;
+        payload.month = month;
+        payload.year = new Date().getFullYear();
+      }
+
+      const formBody = Object.entries(payload)
+        .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+        .join('&');
+
+      try {
+        const res = await fetch(CONFIG.API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: formBody
+        });
+        const data = await res.json();
+        if (data.success) {
+          const rows = data.data.map(row => `
+            <tr>
+              <td>${row.hoTen}</td>
+              <td>${row.ngaySinh}</td>
+              <td>${row.hanTheTu}</td>
+              <td>${row.hanTheDen}</td>
+              <td>${row.soDienThoai}</td>
+              <td>${row.diaChiLh}</td>
+              <td>${row.maPb}</td>
+              <td>${row.maBv}</td>
+            </tr>
+          `).join('');
+          document.getElementById('dataBody').innerHTML = rows || '<tr><td colspan="8">Không có dữ liệu</td></tr>';
+        } else {
+          document.getElementById('dataBody').innerHTML = `<tr><td colspan="8">${data.error}</td></tr>`;
+        }
+      } catch (err) {
+        document.getElementById('dataBody').innerHTML = `<tr><td colspan="8">Lỗi hệ thống</td></tr>`;
+      }
+
+      document.getElementById('loading').innerText = '';
+    }
+
+    // Tự động điền các tháng vào select
+    window.onload = () => {
+      const today = new Date();
+      const select = document.getElementById('monthSelect');
+      for (let m = 1; m <= 12; m++) {
+        const option = document.createElement('option');
+        option.value = m;
+        option.textContent = `Tháng ${m}/${today.getFullYear()}`;
+        select.appendChild(option);
+      }
+      loadData('dueSoon');
+    };
   </script>
-  <script src="scripts.js"></script>
 </body>
 </html>
