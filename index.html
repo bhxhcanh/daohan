@@ -22,7 +22,7 @@
       </div>
       <button class="btn btn-primary" onclick="handleLogin()">Đăng nhập</button>
       <button class="btn btn-link" onclick="showForgotPassword()">Quên mật khẩu?</button>
-      <p class="mt-2">Chưa có tài khoản? <a href="#" onclick="showRegister()">Đăng ký</a></p>
+      <p class="mt-2">Chưa có tài khoản? <a href="#" onclick="showRegister(); return false;">Đăng ký</a></p>
       <div id="loginMessage" class="mt-3 text-danger"></div>
     </div>
 
@@ -80,7 +80,7 @@
 
   <script src="scripts.js"></script>
   <script>
-    let currentEmail = '';
+    // currentEmail đã được khai báo trong scripts.js, không cần khai báo lại ở đây.
 
     function showRegister() {
       hideAll();
