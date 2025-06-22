@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -9,7 +10,10 @@
 </head>
 <body>
   <div class="container">
-    <h3 class="mb-4">Danh sách BHYT đến hạn</h3>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3>Danh sách BHYT đến hạn</h3>
+        <span id="userInfo" class="text-muted"></span>
+    </div>
     <div class="mb-3">
       <button class="btn btn-primary me-2" onclick="loadData('dueSoon')">±30 ngày</button>
       <button class="btn btn-warning me-2" onclick="loadData('expiredRecently')">30–90 ngày trước</button>
@@ -22,14 +26,17 @@
       <table class="table table-bordered table-striped">
         <thead>
           <tr>
+            <th>Hạn thẻ đến</th>
             <th>Họ tên</th>
+            <th>Giới tính</th>
             <th>Ngày sinh</th>
-            <th>Từ ngày</th>
-            <th>Đến ngày</th>
+            <th>Địa chỉ LH</th>
+            <th>Mã PB</th>
+            <th>Số CMND/CCCD</th>
+            <th>Mã BV</th>
             <th>Số điện thoại</th>
-            <th>Địa chỉ</th>
-            <th>maPb</th>
-            <th>maBv</th>
+            <th>Số KCB</th>
+            <th>Mã ĐV</th>
           </tr>
         </thead>
         <tbody id="dataBody"></tbody>
@@ -38,22 +45,25 @@
     <button class="btn btn-outline-secondary mt-3" onclick="logout()">Đăng xuất</button>
   </div>
 
+  <script src="scripts.js"></script>
   <script>
-    const CONFIG = {
-      API_URL: 'https://script.google.com/macros/s/AKfycbwupeI_-uhLqsnv1HiHAnQvjEojHpXra-tZoxJt_Md8-WesJxz8Eif3Vz9WpmOv3sXs/exec'
-    };
-
     const user = JSON.parse(localStorage.getItem('bhyt_user') || '{}');
 
-    function logout() {
-      localStorage.removeItem('bhyt_user');
-      window.location.href = './index.html';
-    }
+    // logout() function will be used from scripts.js
 
     async function loadData(type) {
       document.getElementById('loading').innerText = 'Đang tải dữ liệu...';
       document.getElementById('dataBody').innerHTML = '';
-      if (!user || !user.cccd) return logout();
+      if (!user || !user.cccd) {
+        if (typeof logout === 'function') {
+            logout();
+        } else {
+            console.error('Logout function not available');
+            localStorage.removeItem('bhyt_user');
+            window.location.href = './index.html';
+        }
+        return;
+      }
 
       const payload = {
         action: 'fetchBHYTData',
@@ -62,10 +72,18 @@
       };
 
       if (type === 'byMonth') {
-        const month = document.getElementById('monthSelect').value;
-        if (!month) return;
+        const monthSelect = document.getElementById('monthSelect');
+        const selectedValue = monthSelect.value;
+        if (!selectedValue) {
+            document.getElementById('loading').innerText = ''; 
+            // Optionally display a message that a month needs to be selected or clear table
+            document.getElementById('dataBody').innerHTML = '<tr><td colspan="11">Vui lòng chọn một tháng để lọc.</td></tr>';
+            return;
+        }
+        // Assuming value is "month/year" e.g., "3/2025"
+        const [month, year] = selectedValue.split('/');
         payload.month = month;
-        payload.year = new Date().getFullYear();
+        payload.year = year;
       }
 
       const formBody = Object.entries(payload)
@@ -73,6 +91,12 @@
         .join('&');
 
       try {
+        if (typeof CONFIG === 'undefined' || !CONFIG.API_URL) {
+            console.error('CONFIG.API_URL is not defined.');
+            document.getElementById('dataBody').innerHTML = `<tr><td colspan="11">Lỗi cấu hình: API URL không được định nghĩa.</td></tr>`;
+            document.getElementById('loading').innerText = '';
+            return;
+        }
         const res = await fetch(CONFIG.API_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -82,38 +106,60 @@
         if (data.success) {
           const rows = data.data.map(row => `
             <tr>
-              <td>${row.hoTen}</td>
-              <td>${row.ngaySinh}</td>
-              <td>${row.hanTheTu}</td>
-              <td>${row.hanTheDen}</td>
-              <td>${row.soDienThoai}</td>
-              <td>${row.diaChiLh}</td>
-              <td>${row.maPb}</td>
-              <td>${row.maBv}</td>
+              <td>${row.hanTheDen || ''}</td>
+              <td>${row.hoTen || ''}</td>
+              <td>${row.gioiTinh || ''}</td>
+              <td>${row.ngaySinh || ''}</td>
+              <td>${row.diaChiLh || ''}</td>
+              <td>${row.maPb || ''}</td>
+              <td>${row.soCmnd || ''}</td>
+              <td>${row.maBv || ''}</td>
+              <td>${row.soDienThoai || ''}</td>
+              <td>${row.soKcb || ''}</td>
+              <td>${row.maDvi || ''}</td>
             </tr>
           `).join('');
-          document.getElementById('dataBody').innerHTML = rows || '<tr><td colspan="8">Không có dữ liệu</td></tr>';
+          document.getElementById('dataBody').innerHTML = rows || '<tr><td colspan="11">Không có dữ liệu</td></tr>';
         } else {
-          document.getElementById('dataBody').innerHTML = `<tr><td colspan="8">${data.error}</td></tr>`;
+          document.getElementById('dataBody').innerHTML = `<tr><td colspan="11">${data.error || 'Lỗi không xác định từ máy chủ.'}</td></tr>`;
         }
       } catch (err) {
-        document.getElementById('dataBody').innerHTML = `<tr><td colspan="8">Lỗi hệ thống</td></tr>`;
+        console.error('Error fetching BHYT data:', err);
+        document.getElementById('dataBody').innerHTML = `<tr><td colspan="11">Lỗi hệ thống khi tải dữ liệu. Vui lòng thử lại.</td></tr>`;
       }
-
       document.getElementById('loading').innerText = '';
     }
 
-    // Tự động điền các tháng vào select
     window.onload = () => {
-      const today = new Date();
-      const select = document.getElementById('monthSelect');
-      for (let m = 1; m <= 12; m++) {
-        const option = document.createElement('option');
-        option.value = m;
-        option.textContent = `Tháng ${m}/${today.getFullYear()}`;
-        select.appendChild(option);
+      if (!user || !user.cccd) {
+        if (typeof logout === 'function') {
+            logout();
+        } else {
+            localStorage.removeItem('bhyt_user');
+            window.location.href = './index.html';
+        }
+        return; 
       }
-      loadData('dueSoon');
+
+      if (user.fullName) {
+        document.getElementById('userInfo').textContent = `Xin chào, ${user.fullName}`;
+      }
+
+
+      const today = new Date();
+      const currentYear = today.getFullYear();
+      const select = document.getElementById('monthSelect');
+      // Populate for current year and next year
+      for (let yOffset = 0; yOffset <= 1; yOffset++) {
+          const yearToDisplay = currentYear + yOffset;
+          for (let m = 1; m <= 12; m++) {
+            const option = document.createElement('option');
+            option.value = `${m}/${yearToDisplay}`; // Store as "month/year"
+            option.textContent = `Tháng ${m}/${yearToDisplay}`;
+            select.appendChild(option);
+          }
+      }
+      loadData('dueSoon'); // Initial data load
     };
   </script>
 </body>
