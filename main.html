@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -105,6 +106,69 @@
       loadData('dueSoon'); 
     }
 
+    function autoLinkUrlsInElement(element) {
+      const urlPattern = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#/%?=~_|!:,.;]*[-A-Z0-9+&@#/%?=~_|])|(\bwww\.[-A-Z0-9+&@#/%?=~_|!:,.;]*[-A-Z0-9+&@#/%?=~_|])/ig;
+
+      const walker = document.createTreeWalker(
+        element,
+        NodeFilter.SHOW_TEXT,
+        {
+          acceptNode: function(node) {
+            if (node.parentElement.tagName === 'A' || 
+                node.parentElement.closest('a') !== null) { // Check if parent or any ancestor is an <a>
+              return NodeFilter.FILTER_REJECT;
+            }
+            if (node.parentElement.tagName === 'SCRIPT' || node.parentElement.tagName === 'STYLE') {
+                return NodeFilter.FILTER_REJECT;
+            }
+            return NodeFilter.FILTER_ACCEPT;
+          }
+        },
+        false
+      );
+
+      let node;
+      const nodesToProcess = [];
+      while (node = walker.nextNode()) {
+        nodesToProcess.push(node);
+      }
+
+      nodesToProcess.forEach(textNode => {
+        const text = textNode.nodeValue;
+        let match;
+        let lastIndex = 0;
+        const fragment = document.createDocumentFragment();
+        let foundMatch = false;
+
+        while ((match = urlPattern.exec(text)) !== null) {
+          foundMatch = true;
+          const url = match[0];
+          const precedingText = text.substring(lastIndex, match.index);
+          if (precedingText) {
+            fragment.appendChild(document.createTextNode(precedingText));
+          }
+
+          const a = document.createElement('a');
+          a.href = url.toLowerCase().startsWith('www.') ? 'http://' + url : url;
+          a.textContent = url;
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer';
+          fragment.appendChild(a);
+
+          lastIndex = urlPattern.lastIndex;
+        }
+
+        if (foundMatch) { // Only modify if a URL was actually found and processed
+            if (lastIndex < text.length) {
+                fragment.appendChild(document.createTextNode(text.substring(lastIndex)));
+            }
+            if (textNode.parentNode) { // Check if node is still in DOM
+                 textNode.parentNode.replaceChild(fragment, textNode);
+            }
+        }
+      });
+    }
+
     async function loadNotification() {
       showNotificationArea(); 
 
@@ -127,6 +191,7 @@
 
         if (data.success && typeof data.htmlContent === 'string') {
           notificationContentElement.innerHTML = data.htmlContent;
+          autoLinkUrlsInElement(notificationContentElement); // Auto-link URLs
         } else if (data.success && data.htmlContent === null) { 
            notificationContentElement.innerHTML = `<p class="text-info">ID tài liệu thông báo có thể chưa được cấu hình ở máy chủ hoặc có lỗi khi truy cập tài liệu. Vui lòng kiểm tra cấu hình NOTIFICATION_DOC_ID trong Code.txt và đảm bảo tài khoản Apps Script có quyền truy cập vào tài liệu.</p>`;
         } else {
