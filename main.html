@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -13,7 +14,13 @@
       background-color: #fff;
       border-radius: 5px;
       min-height: 200px; 
-      white-space: pre-wrap; 
+      max-height: 70vh; /* Set a max height for the content area */
+      overflow-y: auto; /* Allow scrolling for content that exceeds max height */
+    }
+    /* Styles for content within notificationDisplayArea if needed */
+    #notificationContent img {
+        max-width: 100%; /* Make images responsive */
+        height: auto;
     }
   </style>
 </head>
@@ -76,7 +83,7 @@
     const notificationDisplayArea = document.getElementById('notificationDisplayArea');
     const notificationLoadingElement = document.getElementById('notificationLoading');
     const notificationContentElement = document.getElementById('notificationContent');
-    const monthSelectElement = document.getElementById('monthSelect'); // Vẫn cần tham chiếu này
+    const monthSelectElement = document.getElementById('monthSelect'); 
 
 
     function showBhytArea() {
@@ -89,19 +96,17 @@
       pageTitleElement.textContent = 'Thông báo';
       bhytDataArea.classList.add('hidden');
       notificationDisplayArea.classList.remove('hidden');
-      // Đảm bảo nội dung loading được hiển thị khi chuyển qua tab thông báo và bắt đầu tải
       notificationContentElement.innerHTML = ''; 
       notificationLoadingElement.classList.remove('hidden');
       notificationLoadingElement.innerText = 'Đang tải thông báo...';
     }
     
     function switchToBhytView() {
-      // showBhytArea(); // Hàm loadData sẽ gọi showBhytArea
-      loadData('dueSoon'); // Tải dữ liệu BHYT mặc định (ví dụ: ±30 ngày)
+      loadData('dueSoon'); 
     }
 
     async function loadNotification() {
-      showNotificationArea(); // Chuẩn bị UI cho việc hiển thị thông báo
+      showNotificationArea(); 
 
       if (typeof CONFIG === 'undefined' || !CONFIG.API_URL) {
           console.error('CONFIG.API_URL is not defined.');
@@ -119,8 +124,11 @@
           body: formBody
         });
         const data = await res.json();
-        if (data.success) {
-          notificationContentElement.innerText = data.content || 'Không có thông báo nào.';
+
+        if (data.success && typeof data.htmlContent === 'string') {
+          notificationContentElement.innerHTML = data.htmlContent;
+        } else if (data.success && data.htmlContent === null) { 
+           notificationContentElement.innerHTML = `<p class="text-info">ID tài liệu thông báo có thể chưa được cấu hình ở máy chủ hoặc có lỗi khi truy cập tài liệu. Vui lòng kiểm tra cấu hình NOTIFICATION_DOC_ID trong Code.txt và đảm bảo tài khoản Apps Script có quyền truy cập vào tài liệu.</p>`;
         } else {
           notificationContentElement.innerHTML = `<p class="text-danger">${data.error || 'Lỗi không xác định từ máy chủ khi tải thông báo.'}</p>`;
         }
@@ -134,7 +142,7 @@
 
 
     async function loadData(type) {
-      showBhytArea(); // Đảm bảo khu vực BHYT hiển thị trước khi tải dữ liệu
+      showBhytArea(); 
       document.getElementById('loading').innerText = 'Đang tải dữ liệu...';
       document.getElementById('dataBody').innerHTML = '';
 
@@ -229,10 +237,9 @@
         document.getElementById('userInfo').textContent = `Xin chào, ${user.fullName}`;
       }
 
-      // Populate month select regardless of initial view
       const today = new Date();
       const currentYear = today.getFullYear();
-      for (let yOffset = 0; yOffset <= 1; yOffset++) { // Hiển thị năm hiện tại và năm tiếp theo
+      for (let yOffset = 0; yOffset <= 1; yOffset++) { 
           const yearToDisplay = currentYear + yOffset;
           for (let m = 1; m <= 12; m++) {
             const option = document.createElement('option');
@@ -242,7 +249,6 @@
           }
       }
       
-      // Load notifications by default
       loadNotification(); 
     };
   </script>
