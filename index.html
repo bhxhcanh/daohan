@@ -80,8 +80,7 @@
 
   <script src="scripts.js"></script>
   <script>
-    // currentEmail đã được khai báo trong scripts.js, không cần khai báo lại ở đây.
-
+    // currentEmail đã được khai báo trong scripts.js
     function showRegister() {
       hideAll();
       document.getElementById('registerForm').classList.remove('hidden');
@@ -103,6 +102,31 @@
       document.getElementById('forgotForm').classList.add('hidden');
       document.getElementById('resetForm').classList.add('hidden');
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const loginPasswordInput = document.getElementById('loginPassword');
+      const regPasswordInput = document.getElementById('regPassword');
+
+      if (loginPasswordInput) {
+        loginPasswordInput.addEventListener('keypress', function(event) {
+          if (event.key === 'Enter') {
+            event.preventDefault(); // Ngăn hành động mặc định của Enter (nếu có)
+            handleLogin();
+          }
+        });
+      }
+
+      if (regPasswordInput) {
+        regPasswordInput.addEventListener('keypress', function(event) {
+          if (event.key === 'Enter') {
+            event.preventDefault(); // Ngăn hành động mặc định của Enter (nếu có)
+            handleRegister();
+          }
+        });
+      }
+      // Hiển thị form đăng nhập mặc định khi trang tải xong
+      showLogin();
+    });
   </script>
 </body>
 </html>
