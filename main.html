@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -15,25 +14,21 @@
       background-color: #fff;
       border-radius: 5px;
       min-height: 200px; 
-      max-height: 70vh; /* Set a max height for the content area */
+      max-height: 75vh; /* Set a max height for the content area */
       overflow-y: auto; /* Allow scrolling for content that exceeds max height */
-    }
-    /* Styles for content within notificationDisplayArea if needed */
-    #notificationContent img {
-        max-width: 100%; /* Make images responsive */
-        height: auto;
+      position: relative;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 id="pageTitle">Thông báo</h3>
+        <h3 id="pageTitle">Trang chủ</h3>
         <span id="userInfo" class="text-muted"></span>
     </div>
 
     <div class="mb-3">
-      <button class="btn btn-info me-2" onclick="loadNotification()">Thông báo</button>
+      <button class="btn btn-info me-2" onclick="loadNotification()">Trang chủ</button>
       <button class="btn btn-success me-2" onclick="switchToBhytView()">Danh sách đáo hạn</button>
     </div>
 
@@ -99,83 +94,19 @@
       notificationDisplayArea.classList.remove('hidden');
       notificationContentElement.innerHTML = ''; 
       notificationLoadingElement.classList.remove('hidden');
-      notificationLoadingElement.innerText = 'Đang tải thông báo...';
+      notificationLoadingElement.innerHTML = 'Đang tải thông báo...'; // Use innerHTML to allow for rich text errors
     }
     
     function switchToBhytView() {
       loadData('dueSoon'); 
     }
 
-    function autoLinkUrlsInElement(element) {
-      const urlPattern = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#/%?=~_|!:,.;]*[-A-Z0-9+&@#/%?=~_|])|(\bwww\.[-A-Z0-9+&@#/%?=~_|!:,.;]*[-A-Z0-9+&@#/%?=~_|])/ig;
-
-      const walker = document.createTreeWalker(
-        element,
-        NodeFilter.SHOW_TEXT,
-        {
-          acceptNode: function(node) {
-            if (node.parentElement.tagName === 'A' || 
-                node.parentElement.closest('a') !== null) { // Check if parent or any ancestor is an <a>
-              return NodeFilter.FILTER_REJECT;
-            }
-            if (node.parentElement.tagName === 'SCRIPT' || node.parentElement.tagName === 'STYLE') {
-                return NodeFilter.FILTER_REJECT;
-            }
-            return NodeFilter.FILTER_ACCEPT;
-          }
-        },
-        false
-      );
-
-      let node;
-      const nodesToProcess = [];
-      while (node = walker.nextNode()) {
-        nodesToProcess.push(node);
-      }
-
-      nodesToProcess.forEach(textNode => {
-        const text = textNode.nodeValue;
-        let match;
-        let lastIndex = 0;
-        const fragment = document.createDocumentFragment();
-        let foundMatch = false;
-
-        while ((match = urlPattern.exec(text)) !== null) {
-          foundMatch = true;
-          const url = match[0];
-          const precedingText = text.substring(lastIndex, match.index);
-          if (precedingText) {
-            fragment.appendChild(document.createTextNode(precedingText));
-          }
-
-          const a = document.createElement('a');
-          a.href = url.toLowerCase().startsWith('www.') ? 'http://' + url : url;
-          a.textContent = url;
-          a.target = '_blank';
-          a.rel = 'noopener noreferrer';
-          fragment.appendChild(a);
-
-          lastIndex = urlPattern.lastIndex;
-        }
-
-        if (foundMatch) { // Only modify if a URL was actually found and processed
-            if (lastIndex < text.length) {
-                fragment.appendChild(document.createTextNode(text.substring(lastIndex)));
-            }
-            if (textNode.parentNode) { // Check if node is still in DOM
-                 textNode.parentNode.replaceChild(fragment, textNode);
-            }
-        }
-      });
-    }
-
     async function loadNotification() {
-      showNotificationArea(); 
+      showNotificationArea();
 
       if (typeof CONFIG === 'undefined' || !CONFIG.API_URL) {
           console.error('CONFIG.API_URL is not defined.');
-          notificationContentElement.innerHTML = `<p class="text-danger">Lỗi cấu hình: API URL không được định nghĩa.</p>`;
-          notificationLoadingElement.classList.add('hidden');
+          notificationLoadingElement.innerHTML = `<p class="text-danger">Lỗi cấu hình: API URL không được định nghĩa.</p>`;
           return;
       }
       
@@ -189,19 +120,25 @@
         });
         const data = await res.json();
 
-        if (data.success && typeof data.htmlContent === 'string') {
-          notificationContentElement.innerHTML = data.htmlContent;
-          autoLinkUrlsInElement(notificationContentElement); // Auto-link URLs
-        } else if (data.success && data.htmlContent === null) { 
-           notificationContentElement.innerHTML = `<p class="text-info">ID tài liệu thông báo có thể chưa được cấu hình ở máy chủ hoặc có lỗi khi truy cập tài liệu. Vui lòng kiểm tra cấu hình NOTIFICATION_DOC_ID trong Code.txt và đảm bảo tài khoản Apps Script có quyền truy cập vào tài liệu.</p>`;
+        if (data.success && data.url) {
+          const iframe = document.createElement('iframe');
+          iframe.src = data.url;
+          iframe.style.width = '100%';
+          iframe.style.height = '70vh';
+          iframe.style.border = 'none';
+          iframe.title = 'Thông báo từ quản trị viên';
+          
+          iframe.onload = () => {
+            notificationLoadingElement.classList.add('hidden');
+          };
+          notificationContentElement.appendChild(iframe);
         } else {
-          notificationContentElement.innerHTML = `<p class="text-danger">${data.error || 'Lỗi không xác định từ máy chủ khi tải thông báo.'}</p>`;
+          const errorMessage = data.error || 'Lỗi không xác định từ máy chủ khi tải thông báo.';
+          notificationLoadingElement.innerHTML = `<p class="text-danger">${errorMessage}</p>`;
         }
       } catch (err) {
         console.error('Error fetching notification content:', err);
-        notificationContentElement.innerHTML = `<p class="text-danger">Lỗi hệ thống khi tải thông báo. Vui lòng thử lại.</p>`;
-      } finally {
-        notificationLoadingElement.classList.add('hidden');
+        notificationLoadingElement.innerHTML = `<p class="text-danger">Lỗi hệ thống khi tải thông báo. Vui lòng thử lại.</p>`;
       }
     }
 
