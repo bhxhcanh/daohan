@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -14,8 +13,6 @@
       background-color: #fff;
       border-radius: 5px;
       min-height: 200px; 
-      max-height: 75vh; /* Set a max height for the content area */
-      overflow-y: auto; /* Allow scrolling for content that exceeds max height */
       position: relative;
     }
   </style>
@@ -122,9 +119,11 @@
 
         if (data.success && data.url) {
           const iframe = document.createElement('iframe');
-          iframe.src = data.url;
+          const url = new URL(data.url);
+          url.searchParams.set('embedded', 'true');
+          iframe.src = url.toString();
           iframe.style.width = '100%';
-          iframe.style.height = '70vh';
+          iframe.style.height = '85vh';
           iframe.style.border = 'none';
           iframe.title = 'Thông báo từ quản trị viên';
           
