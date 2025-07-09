@@ -70,7 +70,7 @@
 
   <script src="scripts.js"></script>
   <script>
-    const user = JSON.parse(localStorage.getItem('bhyt_user') || '{}');
+    // This is run after scripts.js is loaded
     const pageTitleElement = document.getElementById('pageTitle');
     const bhytDataArea = document.getElementById('bhytDataArea');
     const notificationDisplayArea = document.getElementById('notificationDisplayArea');
@@ -147,7 +147,9 @@
       document.getElementById('loading').innerText = 'Đang tải dữ liệu...';
       document.getElementById('dataBody').innerHTML = '';
 
-      if (!user || (!user.cccd && type !== 'expiredRecently')) {
+      const user = JSON.parse(localStorage.getItem('bhyt_user') || '{}');
+      // SECURITY: Check for session ID, not just any user data
+      if (!user || !user.sessionId) {
         if (typeof logout === 'function') {
             logout();
         } else {
@@ -158,14 +160,12 @@
         return;
       }
 
+      // SECURITY: Send sessionId for authentication, not userCCCD
       const payload = {
         action: 'fetchBHYTData',
         filterType: type,
+        sessionId: user.sessionId, 
       };
-
-      if (type !== 'expiredRecently') {
-        payload.userCCCD = user.cccd;
-      }
 
       if (type === 'byMonth') {
         const selectedValue = monthSelectElement.value;
@@ -214,7 +214,13 @@
           `).join('');
           document.getElementById('dataBody').innerHTML = rows || '<tr><td colspan="11">Không có dữ liệu</td></tr>';
         } else {
-          document.getElementById('dataBody').innerHTML = `<tr><td colspan="11">${data.error || 'Lỗi không xác định từ máy chủ.'}</td></tr>`;
+           // If session is invalid, log the user out
+           if (data.error && (data.error.includes('hết hạn') || data.error.includes('không hợp lệ'))) {
+              alert(data.error + " Vui lòng đăng nhập lại.");
+              logout();
+           } else {
+              document.getElementById('dataBody').innerHTML = `<tr><td colspan="11">${data.error || 'Lỗi không xác định từ máy chủ.'}</td></tr>`;
+           }
         }
       } catch (err) {
         console.error('Error fetching BHYT data:', err);
@@ -224,7 +230,9 @@
     }
 
     window.onload = () => {
-      if (!user || !user.cccd) { 
+      const user = JSON.parse(localStorage.getItem('bhyt_user') || '{}');
+      // SECURITY: Check for session ID on page load
+      if (!user || !user.sessionId) { 
         if (typeof logout === 'function') {
             logout();
         } else {
