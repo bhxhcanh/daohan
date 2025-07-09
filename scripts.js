@@ -13,10 +13,33 @@ if (!deviceId) {
 let currentEmail = '';
 let tempLoginCredentials = {}; // To hold email/password for the device verification step
 
-function logout() {
+async function logout() {
+  const user = JSON.parse(localStorage.getItem('bhyt_user') || '{}');
+  const sessionId = user.sessionId; // Get session ID from the user object
+
+  if (sessionId) {
+    const body = `action=logout&sessionId=${encodeURIComponent(sessionId)}`;
+    try {
+      // Send a request to the server to invalidate the session.
+      // We use `fetch` with `keepalive` to increase the chance of the request being sent even if the page is closing.
+      // We don't need to wait for the response (`await`) because we will log out on the client side regardless.
+      fetch(CONFIG.API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body,
+        keepalive: true
+      });
+    } catch (error) {
+      // Log the error but proceed with client-side logout anyway
+      console.error("Error during server-side logout call:", error);
+    }
+  }
+
+  // Always clear local storage and redirect the user
   localStorage.removeItem('bhyt_user');
   window.location.href = './index.html';
 }
+
 
 function hideAll() {
   document.getElementById('loginForm').classList.add('hidden');
@@ -66,6 +89,7 @@ async function handleLogin() {
     });
     const data = await res.json();
     if (data.success) {
+      // The returned user object (data.data) now includes the sessionId
       localStorage.setItem('bhyt_user', JSON.stringify(data.data));
       window.location.href = './main.html';
     } else if (data.requireOtp) {
@@ -112,6 +136,7 @@ async function handleDeviceVerification() {
         });
         const data = await res.json();
         if (data.success) {
+            // The returned user object (data.data) now includes the sessionId
             localStorage.setItem('bhyt_user', JSON.stringify(data.data));
             window.location.href = './main.html';
         } else {
