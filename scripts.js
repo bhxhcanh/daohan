@@ -3,11 +3,43 @@ const CONFIG = {
   API_URL: 'https://script.google.com/macros/s/AKfycbwupeI_-uhLqsnv1HiHAnQvjEojHpXra-tZoxJt_Md8-WesJxz8Eif3Vz9WpmOv3sXs/exec'
 };
 
+// Generate or retrieve a unique device ID for the browser
+let deviceId = localStorage.getItem('bhyt_deviceId');
+if (!deviceId) {
+  deviceId = self.crypto.randomUUID ? self.crypto.randomUUID() : 'dev-' + Date.now() + Math.random().toString(36).substring(2);
+  localStorage.setItem('bhyt_deviceId', deviceId);
+}
+
 let currentEmail = '';
+let tempLoginCredentials = {}; // To hold email/password for the device verification step
 
 function logout() {
   localStorage.removeItem('bhyt_user');
   window.location.href = './index.html';
+}
+
+function hideAll() {
+  document.getElementById('loginForm').classList.add('hidden');
+  document.getElementById('registerForm').classList.add('hidden');
+  document.getElementById('forgotForm').classList.add('hidden');
+  document.getElementById('resetForm').classList.add('hidden');
+  document.getElementById('deviceOtpForm').classList.add('hidden');
+}
+
+function showLogin() {
+  hideAll();
+  document.getElementById('loginForm').classList.remove('hidden');
+  tempLoginCredentials = {}; // Clear temp credentials when returning to login
+}
+
+function showRegister() {
+  hideAll();
+  document.getElementById('registerForm').classList.remove('hidden');
+}
+
+function showForgotPassword() {
+  hideAll();
+  document.getElementById('forgotForm').classList.remove('hidden');
 }
 
 async function handleLogin() {
@@ -21,7 +53,10 @@ async function handleLogin() {
     return;
   }
 
-  const body = `action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`;
+  // Store credentials for potential device verification OTP step
+  tempLoginCredentials = { email, password };
+  
+  const body = `action=login&email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}&deviceId=${encodeURIComponent(deviceId)}`;
 
   try {
     const res = await fetch(CONFIG.API_URL, {
@@ -33,6 +68,14 @@ async function handleLogin() {
     if (data.success) {
       localStorage.setItem('bhyt_user', JSON.stringify(data.data));
       window.location.href = './main.html';
+    } else if (data.requireOtp) {
+        // New device flow
+        const deviceOtpMessage = document.getElementById('deviceOtpMessage');
+        deviceOtpMessage.className = 'mt-3 text-info';
+        deviceOtpMessage.innerText = data.message;
+        currentEmail = email; // Keep track of email
+        hideAll();
+        document.getElementById('deviceOtpForm').classList.remove('hidden');
     } else {
       loginMessage.innerText = data.error || 'Đăng nhập thất bại.';
     }
@@ -41,6 +84,47 @@ async function handleLogin() {
     loginMessage.innerText = 'Lỗi kết nối. Vui lòng thử lại.';
   }
 }
+
+async function handleDeviceVerification() {
+    const otp = document.getElementById('deviceOtpCode').value.trim();
+    const deviceOtpMessage = document.getElementById('deviceOtpMessage');
+    deviceOtpMessage.innerText = '';
+
+    if (!otp) {
+        deviceOtpMessage.className = 'mt-3 text-danger';
+        deviceOtpMessage.innerText = 'Vui lòng nhập mã OTP.';
+        return;
+    }
+    if (!tempLoginCredentials.email || !tempLoginCredentials.password) {
+        deviceOtpMessage.className = 'mt-3 text-danger';
+        deviceOtpMessage.innerText = 'Phiên làm việc đã hết hạn. Vui lòng quay lại và đăng nhập.';
+        return;
+    }
+
+    const deviceName = navigator.userAgent;
+    const body = `action=verifyDeviceAndLogin&email=${encodeURIComponent(tempLoginCredentials.email)}&password=${encodeURIComponent(tempLoginCredentials.password)}&otp=${encodeURIComponent(otp)}&deviceId=${encodeURIComponent(deviceId)}&deviceName=${encodeURIComponent(deviceName)}`;
+
+    try {
+        const res = await fetch(CONFIG.API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: body
+        });
+        const data = await res.json();
+        if (data.success) {
+            localStorage.setItem('bhyt_user', JSON.stringify(data.data));
+            window.location.href = './main.html';
+        } else {
+            deviceOtpMessage.className = 'mt-3 text-danger';
+            deviceOtpMessage.innerText = data.error || 'Xác thực thất bại.';
+        }
+    } catch (error) {
+        console.error("Device verification error:", error);
+        deviceOtpMessage.className = 'mt-3 text-danger';
+        deviceOtpMessage.innerText = 'Lỗi kết nối. Vui lòng thử lại.';
+    }
+}
+
 
 async function handleRegister() {
   const email = document.getElementById('regEmail').value.trim();
@@ -114,15 +198,15 @@ async function handleForgot() {
       body: body
     });
     const data = await res.json();
-    forgotMessage.innerText = data.message || data.error;
+    
     if (data.success) {
-      // Assuming showResetForm() function exists in index.html to switch views
-      if (typeof hideAll === 'function' && document.getElementById('resetForm')) {
-          hideAll();
-          document.getElementById('resetForm').classList.remove('hidden');
-      } else {
-          alert('Vui lòng kiểm tra email để lấy OTP và nhập vào form tiếp theo (nếu có).');
-      }
+      forgotMessage.className = 'mt-3 text-success';
+      forgotMessage.innerText = data.message;
+      hideAll();
+      document.getElementById('resetForm').classList.remove('hidden');
+    } else {
+      forgotMessage.className = 'mt-3 text-danger';
+      forgotMessage.innerText = data.error;
     }
   } catch (error) {
     console.error("Forgot password error:", error);
@@ -158,15 +242,41 @@ async function handleResetPassword() {
       body: body
     });
     const data = await res.json();
-    resetMessage.innerText = data.message || data.error;
     if (data.success) {
         alert(data.message || 'Đặt lại mật khẩu thành công!');
-        if (typeof showLogin === 'function') {
-            showLogin();
-        }
+        resetMessage.innerText = '';
+        showLogin();
+    } else {
+       resetMessage.innerText = data.error || data.message;
     }
   } catch (error) {
     console.error("Reset password error:", error);
     resetMessage.innerText = 'Lỗi kết nối. Vui lòng thử lại.';
   }
 }
+
+// Attach event listeners after the DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+  const loginPasswordInput = document.getElementById('loginPassword');
+  const regPasswordInput = document.getElementById('regPassword');
+
+  if (loginPasswordInput) {
+    loginPasswordInput.addEventListener('keypress', function(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        handleLogin();
+      }
+    });
+  }
+
+  if (regPasswordInput) {
+    regPasswordInput.addEventListener('keypress', function(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        handleRegister();
+      }
+    });
+  }
+  // Show the login form by default
+  showLogin();
+});
