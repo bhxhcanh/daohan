@@ -2125,7 +2125,7 @@ function initQRCodeTool() {
     const resultText = document.getElementById('qr-reader-result-text');
 
     // --- QR Code Generation ---
-    async function generateQrCode() {
+    function generateQrCode() {
         let data = '';
         statusMessage.textContent = '';
         qrCodeContainer.innerHTML = '';
@@ -2169,19 +2169,20 @@ function initQRCodeTool() {
 
         if (data) {
             try {
-                 const dataUrl = await QRCode.toDataURL(data, {
-                    width: 256,
-                    errorCorrectionLevel: 'high',
-                    color: {
-                        dark: '#000000',
-                        light: '#FFFFFF'
-                    }
-                });
-                const img = document.createElement('img');
-                img.src = dataUrl;
-                qrCodeContainer.appendChild(img);
+                const canvas = document.createElement('canvas');
+                qrCodeContainer.appendChild(canvas);
+                
+                QrCreator.render({
+                    text: data,
+                    radius: 0.4, // for rounded corners
+                    ecLevel: 'H', // Error correction level: 'L', 'M', 'Q', 'H'
+                    fill: '#000000', // QR code color
+                    background: null, // Transparent background
+                    size: 256 // size in pixels
+                }, canvas);
             } catch (error) {
                 console.error("QR Code generation error:", error);
+                qrCodeContainer.innerHTML = ''; // Clear the container on error
                 statusMessage.textContent = getTranslation('qrcode.messages.generationError');
             }
         } else {
